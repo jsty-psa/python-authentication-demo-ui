@@ -1,0 +1,4 @@
+[15 Feb 2024]
+    - Completed the API Request Body. Searching how to generate JWS in Python. Searching also how to extract the Private Key from P12 file in python.
+[16 Feb 2024]
+    - Completed generating the Signature and Authorization Header.
