@@ -26,7 +26,7 @@ $(document).ready(function() {
             method: "GET",
             url: "/request/otp/" + pcn,
             success: function(data) {
-                $("#authentication_response").val(data)
+                $("#authentication_response").val("The OTP has beeen sent to: " + data)
             }
         });
     });
