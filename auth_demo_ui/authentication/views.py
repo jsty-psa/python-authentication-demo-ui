@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
+from django.views.decorators.csrf import csrf_exempt
 
 from authentication.include.authorization import get_authorization
-from authentication.include.base64 import base64_url_safe_string, base64_url_decode
-from authentication.include.crypto import symmetric_encrypt, symmetric_decrypt, asymmetric_encrypt, asymmetric_decrypt
+from authentication.include.base64 import base64_url_safe_string
+from authentication.include.crypto import symmetric_encrypt, asymmetric_encrypt
 from authentication.include.signature import create_signature
-from authentication.include.utils import print_hex_binary, get_current_time, get_thumbprint
+from authentication.include.utils import print_hex_binary, get_current_time, get_thumbprint, decrypt_response
 
 import os, json, requests, secrets, warnings
 
@@ -16,8 +17,6 @@ def test(request):
     return render(request, 'authenticate.html')
 
 def requestOTP(request, pcn):
-    print("\n\n\n\n\n")
-    
     base_url = os.environ.get('BASE_URL')
     misp_license_key = os.environ.get('TSP_LICENSE_KEY')
     partner_id = os.environ.get('PARTNER_ID')
@@ -51,34 +50,15 @@ def requestOTP(request, pcn):
     print(f'OTP Response:\n{str(response.json())}\n')
     
     if not response.json()["errors"]:
-    
-        result = {}
-        partner_id = os.environ.get('PARTNER_ID')
-        
-        partner_private_key = open(f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem').read()
-        partner_private_key_bytes = bytes(partner_private_key, "utf-8")
-        
-        response_session_key_encrypted = base64_url_decode(response.json()["responseSessionKey"])
-        response_encrypted = base64_url_decode(response.json()["response"])
-        result["response_session_key"] = asymmetric_decrypt(response_session_key_encrypted, partner_private_key_bytes)
-        result["response"] = symmetric_decrypt(response_encrypted, result["response_session_key"])
-                
-        print(f"response_session_key_encrypted: {response_session_key_encrypted}\n")
-        print(f"response_session_key_encrypted length: {len(response_session_key_encrypted)}\n")
-        print(f"response_encrypted: {response_encrypted}\n")
-        print(f"response_encrypted length: {len(response_encrypted)}\n")
-        print(f"response_session_key: {result['response_session_key']}\n")
-        print(f"response_session_key length: {len(result['response_session_key'])}\n")
-        print(f"response: {result['response']}\n")
-
-        return JsonResponse(result['response'])
+        result = decrypt_response(response)
+        print(f'OTP Response:\n{result}\n')
+        return JsonResponse(result)
     
     response = json.loads(str(response.json()).replace('[', '').replace(']', '').replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
 
-def authenticate(request):
-    print("\n\n\n\n\n")
-    
+@csrf_exempt
+def authenticate(request):    
     http_request_body = {}
     http_request_header = {}
     http_request_body['requestedAuth'] = {}
@@ -87,10 +67,7 @@ def authenticate(request):
 
     # transaction_id = request.get("transaction_id", get_random_string(length=10, allowed_chars='0123456789'))
     transaction_id = "1234567890"
-    value = request.GET.dict()
-
-    print(f"Value:{value}\n\n")
-    print(f"Value:{request.GET}")
+    value = request.POST.dict()
     
     partner_id = os.environ.get('PARTNER_ID')
     IDA_certificate_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-IDAcertificate.cer'
@@ -98,7 +75,6 @@ def authenticate(request):
     base_url = os.environ.get('BASE_URL')
     version = os.environ.get('VERSION')
     auth_url = base_url + '/idauthentication/v1/' + ('kyc/' if value['input_ekyc'] == 'on' else 'auth/') + os.environ.get('TSP_LICENSE_KEY') + '/' + os.environ.get('PARTNER_ID') + '/' + os.environ.get('API_KEY')
-    
     datetime_now = get_current_time()
     
     http_request_body['id'] = 'philsys.identity.kyc' if value['input_ekyc'] == 'on' else 'philsys.identity.auth'
@@ -169,28 +145,9 @@ def authenticate(request):
     print(f'Authentication Response:\n{response.json()}\n')
     
     if not response.json()["errors"]:
-    
-        result = {}
-        partner_id = os.environ.get('PARTNER_ID')
-        
-        partner_private_key = open(f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem').read()
-        partner_private_key_bytes = bytes(partner_private_key, "utf-8")
-        
-        response_session_key_encrypted = base64_url_decode(response.json()["responseSessionKey"])
-        response_encrypted = base64_url_decode(response.json()["response"])
-        result["response_session_key"] = asymmetric_decrypt(response_session_key_encrypted, partner_private_key_bytes)
-        result["response"] = symmetric_decrypt(response_encrypted, result["response_session_key"])
-                
-        print(f"response_session_key_encrypted: {response_session_key_encrypted}\n")
-        print(f"response_session_key_encrypted length: {len(response_session_key_encrypted)}\n")
-        print(f"response_encrypted: {response_encrypted}\n")
-        print(f"response_encrypted length: {len(response_encrypted)}\n")
-        print(f"response_session_key: {result['response_session_key']}\n")
-        print(f"response_session_key length: {len(result['response_session_key'])}\n")
-        print(f"response: {result['response']}\n")
-
-        return JsonResponse(result['response'])
+        result = decrypt_response(response)
+        print(f'Authentication Response:\n{result}\n')
+        return JsonResponse(result)
     
     response = json.loads(str(response.json()).replace('[', '').replace(']', '').replace('\'', '"').replace('None', '"None"'))
-    
     return JsonResponse(response)

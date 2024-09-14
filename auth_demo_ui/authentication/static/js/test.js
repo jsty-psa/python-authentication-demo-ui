@@ -48,7 +48,7 @@ $(document).ready(function() {
         input_demo_value = $("#input_demo_value").val();
 
         $.ajax({
-            method: "GET",
+            method: "POST",
             url: "/authenticate/",
             data: {
                 individual_id : individual_id,
