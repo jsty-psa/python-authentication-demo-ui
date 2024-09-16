@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
 
 from authentication.include.authorization import get_authorization
@@ -58,7 +57,8 @@ def requestOTP(request, pcn):
     return JsonResponse(response)
 
 @csrf_exempt
-def authenticate(request):    
+def authenticate(request):
+
     http_request_body = {}
     http_request_header = {}
     http_request_body['requestedAuth'] = {}
