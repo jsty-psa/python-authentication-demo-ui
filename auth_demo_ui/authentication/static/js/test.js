@@ -14,7 +14,7 @@ function eToNumber(num) {
 }
 
 $(document).ready(function() {
-    // alert("Hello World!")!
+    // alert("Hello World!");
     $("button[id^='btn']").click(function(event) {
         event.preventDefault();
     });

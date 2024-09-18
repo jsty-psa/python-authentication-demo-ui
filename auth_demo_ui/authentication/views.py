@@ -13,7 +13,7 @@ import os, json, requests, secrets, warnings
 warnings.filterwarnings("ignore")
 
 def test(request):
-    return render(request, 'authenticate.html')
+    return render(request, 'authenticate2.html')
 
 def requestOTP(request, pcn):
     base_url = os.environ.get('BASE_URL')
@@ -68,6 +68,8 @@ def authenticate(request):
     # transaction_id = request.get("transaction_id", get_random_string(length=10, allowed_chars='0123456789'))
     transaction_id = "1234567890"
     value = request.POST.dict()
+    
+    print(f"Value:\n{value}")
     
     partner_id = os.environ.get('PARTNER_ID')
     IDA_certificate_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-IDAcertificate.cer'
