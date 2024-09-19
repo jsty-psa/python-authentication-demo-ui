@@ -62,6 +62,11 @@ $(document).ready(function() {
             },
             success: function(data){
                 console.log(data);
+                // $('#authentication_response').val(JSON.stringify(data, null, 2)); // Insert data into textarea
+                // alert(JSON.stringify(data, null, 2)); alert 
+                 // Insert data into the modal body
+                 $('#modalBody').text(JSON.stringify(data, null, 2));
+                 $('#logoutModal').modal('show'); // Show the modal
             }
         });
     });
