@@ -13,15 +13,30 @@ import os, json, requests, secrets, warnings
 warnings.filterwarnings("ignore")
 
 def test(request):
-    return render(request, 'authenticate2.html')
+    return render(request, 'authenticate.html')
 
+@csrf_exempt
 def requestOTP(request, pcn):
     base_url = os.environ.get('BASE_URL')
     misp_license_key = os.environ.get('TSP_LICENSE_KEY')
     partner_id = os.environ.get('PARTNER_ID')
     partner_api_key = os.environ.get('API_KEY')
-    env = os.environ.get('ENV')
     version = os.environ.get('VERSION')
+    
+    otp_channel = []
+    
+    otp_email = request.POST.get('otp_email', '').lower()
+    otp_phone = request.POST.get('otp_phone', '').lower()
+    
+    otp_email = otp_email in ['1', 'true', 't', 'yes', 'y']
+    otp_phone = otp_phone in ['1', 'true', 't', 'yes', 'y']
+    
+    if(otp_email):
+        otp_channel.append("email")
+        
+    if(otp_phone):
+        otp_channel.append("phone")
+    
     # transaction_id = get_random_string(length=10, allowed_chars='0123456789')
     transaction_id = "1234567890"
     partner_private_key_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
@@ -52,8 +67,8 @@ def requestOTP(request, pcn):
         result = decrypt_response(response)
         print(f'OTP Response:\n{result}\n')
         return JsonResponse(result)
-    
-    response = json.loads(str(response.json()).replace('[', '').replace(']', '').replace('\'', '"').replace('None', '"None"'))
+
+    response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
 
 @csrf_exempt
@@ -69,13 +84,15 @@ def authenticate(request):
     transaction_id = "1234567890"
     value = request.POST.dict()
     
-    print(f"Value:\n{value}")
+    print(f"Request Method: {request.method}\n")
+    print(f"Value:\n{value}\n")
     
     partner_id = os.environ.get('PARTNER_ID')
     IDA_certificate_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-IDAcertificate.cer'
     partner_private_key_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
     base_url = os.environ.get('BASE_URL')
     version = os.environ.get('VERSION')
+    
     auth_url = base_url + '/idauthentication/v1/' + ('kyc/' if value['input_ekyc'] == 'on' else 'auth/') + os.environ.get('TSP_LICENSE_KEY') + '/' + os.environ.get('PARTNER_ID') + '/' + os.environ.get('API_KEY')
     datetime_now = get_current_time()
     
@@ -116,8 +133,6 @@ def authenticate(request):
     # requestSessionKey
     ida_certificate = open(IDA_certificate_location).read()
     ida_certificate_bytes = bytes(ida_certificate, "utf-8")
-    # No need for PYTHON
-    # AES_SECRET_KEY_ENCODED = base64.b64encode(AES_SECRET_KEY).decode('utf-8')
     request_session_key = asymmetric_encrypt(AES_SECRET_KEY, ida_certificate_bytes)
     http_request_body['requestSessionKey'] = base64_url_safe_string(request_session_key)
 
@@ -150,6 +165,6 @@ def authenticate(request):
         result = decrypt_response(response)
         print(f'Authentication Response:\n{result}\n')
         return JsonResponse(result)
-    
-    response = json.loads(str(response.json()).replace('[', '').replace(']', '').replace('\'', '"').replace('None', '"None"'))
+
+    response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
