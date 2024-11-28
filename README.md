@@ -82,10 +82,6 @@ VERSION=[PhilSys Version]
 **Run the Django Project**
 
 ```bash
-# Windows
-python auth_demo_ui/manage.py runserver 0.0.0.0:8000
-
-# Linux
 python auth_demo_ui/manage.py runserver 0.0.0.0:8000
 ```
 
