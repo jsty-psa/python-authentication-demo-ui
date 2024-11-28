@@ -1,0 +1,28 @@
+List of Test PCNs
+Vincent - 2381594586391690 - 4907 3570 2983 7265 - {"dob": "1998/08/02"}
+Ian - 7203856082768167 - 7203 8560 8276 8167 - {"dob": "1998/04/15"}
+Francis - 5872130947327698 - 5472190792697582 - {"dob": "1995/12/23"}
+Andy - 8273986319348106 - 8273 9863 1934 8106 - {"dob": "1996/01/24"}
+
+https://api.apps-external.uat2.phylsys.gov.ph/idauthentication/v1/internal/authTransactions/individualIdType/VID/individualId/8273986319348106?pageStart=1&pageFetch=10
+
+Magic Weapon (Demographic)
+{"age": -1}
+
+msp_readonly - Username 
+msp_readonly@1234 - Password.
+For Postgres credential.
+
+--- MSP ---
+AP_TSP2023121800005 - Partner ID
+959796 - API Key
+27160 - Policy ID
+65156 - Policy Group ID
+
+--- PSA ---
+AP2023100400003 - Partner ID
+245478 - API Key
+628693 - Policy ID
+421956 - Policy Group ID
+
+http://10.10.20.121:8000/authenticate/?individual_id=8273986319348106&individual_id_type=VID&input_bio=off&input_otp=off&input_demo=on&input_ekyc=off&input_otp_value=&input_demo_value={%22age%22%3A%200}
