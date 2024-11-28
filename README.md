@@ -7,10 +7,6 @@ This is a sample application utilizing the PhilSys Authentication API via Python
 **Create a virtual environment in python.**
 
 ```bash
-# Windows
-python -m venv venv
-
-# Linux
 python -m venv venv
 ```
 
