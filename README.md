@@ -4,45 +4,50 @@ This is a sample application utilizing the PhilSys Authentication API via Python
 
 ## Installation
 
-**Create a virtual environment in python.**
+1. **Create a virtual environment in python.**
 
 ```bash
 python -m venv venv
 ```
 
-**Activate the virtual environment.**
+2. **Activate the virtual environment.**
+
+- For Windows
+```bash
+.\venv\Scripts\activate
+```
+
+- For Linux
 
 ```bash
-# Windows
-.\venv\Scripts\activate
-
-# Linux
 source env/bin/activate
 ```
 
-**Install all libraries in the requirements.txt**
+3. **Install all libraries in the requirements.txt**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**Create environment variable inside the auth_demo_ui folder.**
+4. **Create environment variable inside the auth_demo_ui folder.**
 
+- For Windows
 ```bash
-# Windows
 type nul > auth_demo_ui\.env
+```
 
-# Linux
+- For Linux
+```bash
 touch auth_demo_ui/.env
 ```
 
-**Create and upload all the keys needed in this location**
+5. **Create and upload all the keys needed in this location**
 
 ```
 auth_demo_ui/authentication/keys/[Partner_ID]
 ```
 
-**Fill-up properties inside the environment variable.**
+6. **Fill-up properties inside the environment variable.**
 
 ```properties
 # PhilSys Base URL for authentication
@@ -79,7 +84,7 @@ ID_AUTH_MANAGER=[ID Authentication manager]
 VERSION=[PhilSys Version]
 ```
 
-**Run the Django Project**
+7. **Run the Django Project**
 
 ```bash
 python auth_demo_ui/manage.py runserver 0.0.0.0:8000
