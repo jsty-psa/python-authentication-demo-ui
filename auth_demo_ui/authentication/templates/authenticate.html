@@ -201,14 +201,100 @@
                             <div class="modal-dialog modal-lg modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="modal-result-label">API Result</h5>
+                                        <h5 class="modal-title" id="modal-result-label">Authentication Result</h5>
                                     </div>
                                     <div class="modal-body">
-                                        <pre id="modal-result-value">This is the content of the modal.</pre>
+                                        <div id="ekyc_result" style="display: none;">
+                                            <div class="container-fluid">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <center><img id="ekyc_photo" height="430px" width="334px"></img></center>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <table class="table table-bordered">
+                                                            <tr>
+                                                                <td colspan="2"><center>Personal Information</center></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Last Name</td>
+                                                                <td id="ekyc_last_name"">Last Name</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>First Name</td>
+                                                                <td id="ekyc_first_name"">First Name</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Middle Name</td>
+                                                                <td id="ekyc_middle_name"">Middle Name</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Suffix</td>
+                                                                <td id="ekyc_suffix"">Suffix</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Date of Birth</td>
+                                                                <td id="ekyc_dob"">Date of Birth</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Phone Number</td>
+                                                                <td id="ekyc_phone_number"">Phone Number</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Email</td>
+                                                                <td id="ekyc_email"">Email</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Age</td>
+                                                                <td id="ekyc_age"">Age</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Marital Status</td>
+                                                                <td id="ekyc_marital_status"">Marital Status</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <center>-----------------  Other Information -----------------</center>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <table class="table table-bordered">
+                                                            <tr>
+                                                                <td>Country</td>
+                                                                <td id="ekyc_country"">Country</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Present Address</td>
+                                                                <td id="ekyc_present_address"">Present Address</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Province</td>
+                                                                <td id="ekyc_province"">Province</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Municipality</td>
+                                                                <td id="ekyc_municipality"">Municipality</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Barangay</td>
+                                                                <td id="ekyc_barangay"">Barangay</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Postal Code</td>
+                                                                <td id="ekyc_postal_code"">Postal Code</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Blood Type</td>
+                                                                <td id="ekyc_blood_type"">Blood Type</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <pre id="modal-result-value"></pre>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary">Save changes</button>
                                     </div>
                                 </div>
                             </div>
@@ -349,11 +435,15 @@
                                                     <label class="form-check-label" for="chkbox_demog_permanentAddressLine1">Permament Address (Home Number din ata?)</label>
                                                 </div>
                                             </div>
+                                            <div id="modal-demog-default">
+                                                <div class="form-check">
+                                                    Select an item from the list to view<br>the demographic details
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" id="model-demog-input-save">Add</button>
                                     </div>
                                 </div>
                             </div>

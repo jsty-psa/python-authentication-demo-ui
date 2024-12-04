@@ -153,24 +153,28 @@ $(function() {
 
     $("#category_page1").click(function() {
         hideDemographicInputCategory();
+        $("#modal-demog-default").hide();
         $("#modal-demog-input-category-1").show();
         setActiveCategory('category_page1');
     });
 
     $("#category_page2").click(function() {
         hideDemographicInputCategory();
+        $("#modal-demog-default").hide();
         $("#modal-demog-input-category-2").show();
         setActiveCategory('category_page2');
     });
 
     $("#category_page3").click(function() {
         hideDemographicInputCategory();
+        $("#modal-demog-default").hide();
         $("#modal-demog-input-category-3").show();
         setActiveCategory('category_page3');
     });
 
     $("#category_page4").click(function() {
         hideDemographicInputCategory();
+        $("#modal-demog-default").hide();
         $("#modal-demog-input-category-4").show();
         setActiveCategory('category_page4');
     });
@@ -293,8 +297,34 @@ $(function() {
             url: "/authenticate/",
             data: request_body,
             success: function(data) {
-                var result = JSON.stringify(data, null, 4);
-                $("#modal-result-value").text(result);
+                resetAuthenticationResult();
+                if(data.kycStatus) {
+                    var identity = data.identity
+                    $("#ekyc_last_name").html(identity.lastName_eng ? identity.lastName_eng : "N/A");
+                    $("#ekyc_first_name").html(identity.firstName_eng ? identity.firstName_eng : "N/A");
+                    $("#ekyc_middle_name").html(identity.middleName_eng ? identity.middleName_eng : "N/A");
+                    $("#ekyc_suffix").html(identity.suffix_eng ? identity.suffix_eng : "N/A");
+                    $("#ekyc_dob").html(identity.dob ? identity.dob : "N/A");
+                    $("#ekyc_phone_number").html(identity.phoneNumber ? identity.phoneNumber : "N/A");
+                    $("#ekyc_email").html(identity.emailId ? identity.emailId : "N/A");
+                    $("#ekyc_age").html(identity.age ? identity.age : "N/A");
+                    $("#ekyc_marital_status").html(identity.maritalStatus_eng ? identity.maritalStatus_eng : "N/A");
+                    $("#ekyc_country").html(identity.pobCountry_eng ? identity.pobCountry_eng : "N/A");
+                    $("#ekyc_present_address").html(identity.presentAddress_eng ? identity.presentAddress_eng : "N/A");
+                    $("#ekyc_province").html(identity.location1_eng ? identity.location1_eng : "N/A");
+                    $("#ekyc_municipality").html(identity.location2_eng ? identity.location2_eng : "N/A");
+                    $("#ekyc_barangay").html(identity.location3_eng ? identity.location3_eng : "N/A");
+                    $("#ekyc_postal_code").html(identity.postalCode ? identity.postalCode : "N/A");
+                    $("#ekyc_blood_type").html(identity.bloodType_eng ? identity.bloodType_eng : "N/A");
+                    $("#ekyc_photo").attr("src", "data:image/png;base64," + identity.photo);
+
+                    $("#ekyc_result").show();
+                }
+                else {
+                    var result = JSON.stringify(data, null, 4);
+                    $("#modal-result-value").text(result);
+                }
+
                 $("#modal-result").modal("toggle");
             }
         });
@@ -330,4 +360,25 @@ function disableDemographicForm(value) {
 
 function hideDemographicInputCategory() {
     $("div[id^=modal-demog-input-category-]").hide();
+}
+
+function resetAuthenticationResult() {
+    $("#modal-result-value").html("")
+    $("#ekyc_last_name").html("");
+    $("#ekyc_first_name").html("");
+    $("#ekyc_middle_name").html("");
+    $("#ekyc_suffix").html("");
+    $("#ekyc_dob").html("");
+    $("#ekyc_phone_number").html("");
+    $("#ekyc_email").html("");
+    $("#ekyc_age").html("");
+    $("#ekyc_marital_status").html("");
+    $("#ekyc_country").html("");
+    $("#ekyc_present_address").html("");
+    $("#ekyc_province").html("");
+    $("#ekyc_municipality").html("");
+    $("#ekyc_barangay").html("");
+    $("#ekyc_postal_code").html("");
+    $("#ekyc_blood_type").html("");
+    $("#ekyc_photo").removeAttr("src");
 }
