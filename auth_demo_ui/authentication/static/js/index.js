@@ -364,6 +364,7 @@ function hideDemographicInputCategory() {
 }
 
 function resetAuthenticationResult() {
+    $("#ekyc_result").hide();
     $("#modal-result-value").html("")
     $("#ekyc_last_name").html("");
     $("#ekyc_first_name").html("");
