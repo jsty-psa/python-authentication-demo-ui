@@ -255,6 +255,7 @@ $(function() {
                 otp_phone: otp_phone,
             },
             success:function(data) {
+                resetAuthenticationResult();
                 var result = JSON.stringify(data, null, 4);
                 $("#modal-result-value").text(result);
                 $("#modal-result").modal("toggle");
