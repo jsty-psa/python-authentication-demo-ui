@@ -263,7 +263,13 @@ $(function() {
          });
     });
 
+    $("#biometric-capture").click(function() {
+        console.log("Initiating Biometric Capture....");
+        fingerprintCapture($("#fingers-count").val());
+    });
+
     $("#send-auth-request").click(function() {
+        // console.log(biometric_input);
         var demog_value = {};
 
         if($("#auth-type-demo").is(':checked')) {
@@ -284,14 +290,17 @@ $(function() {
             "individual_id": $("#individual-id").val(),
             "individual_id_type": $("#individual-id-type").val(),
             
-            "input_bio": $("#auth-type-bio").is(':checked') ? "on" : "off",
+            "input_bio": ($("#auth-type-fp").is(':checked') || $("#auth-type-iris").is(':checked') || $("#auth-type-face").is(':checked')) ? "on" : "off",
             "input_otp": $("#auth-type-otp").is(':checked') ? "on" : "off",
             "input_demo": $("#auth-type-demo").is(':checked') ? "on" : "off",
             "input_ekyc": $("#auth-type-ekyc").is(':checked') ? "on" : "off",
     
             "input_otp_value": $("#otp-value").val(),
             "input_demo_value": demog_value,
+            "input_bio_value": biometric_input,
         }
+
+        console.log(biometric_input);
 
         $.ajax({
             type:"POST",
@@ -331,6 +340,66 @@ $(function() {
         });
     });
 });
+
+var biometric_input = "";
+
+async function fingerprintCapture(input) {
+    biometric_input = "";
+    const date = new Date().toISOString();
+    const params = {
+        "env": "Staging",
+        "purpose": "Auth",
+        "specVersion": "0.9.5.1.5",
+        "timeout": "300000",
+        "captureTime": date,
+        "domainUri": "https://api.apps-external.uat2.phylsys.gov.ph",
+        "transactionId": "1234567890",
+        "bio": [
+            {
+                "type": "Finger",
+                "count": input,
+                "bioSubType": [
+                    "UNKNOWN"
+                ],
+                "requestedScore": "60",
+                "deviceId": "2147000102",
+                "deviceSubId": "1",
+                "previousHash": ""
+            }
+        ],
+        "customOpts": [
+            {
+                "name": "name1",
+                "value": "value1"
+            }
+        ]
+    };
+
+    const fingerprint_url = "http://127.0.0.1:4501/capture";
+    
+    const headers = {
+        "content-type": "application/json",
+        "accept": "*/*",
+    }
+
+    const response = await fetch(fingerprint_url, {
+        method: "CAPTURE",
+        headers: headers,
+        body: JSON.stringify(params)
+    })
+    .then(response => response.json())  // Parse the response as JSON
+    .then(data => {
+        resetAuthenticationResult();
+        data = data.biometrics;
+        biometric_input = JSON.stringify(data);
+        var result = JSON.stringify(data, null, 4);
+        $("#modal-result-value").text(result);
+        $("#modal-result").modal("toggle");
+    })
+    .catch(error => {
+        console.error("Error:", error);  // Handle any errors
+    });
+} 
 
 function disableFingerPrintForm(value) {
     $("#fingers-count").attr("disabled", value);

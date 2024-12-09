@@ -119,7 +119,7 @@ def authenticate(request):
     if(value['input_demo'] == 'on'):
         http_request_body_request['demographics'] = json.loads(value['input_demo_value'])
     if(value['input_bio'] == 'on'):
-        http_request_body_request['biometrics'] = json.loads("load_biometric_value_here")
+        http_request_body_request['biometrics'] = json.loads(value['input_bio_value'])
         
     # request
     authentication_request_request = json.dumps(http_request_body_request)
@@ -158,8 +158,6 @@ def authenticate(request):
     print(f'Authentication Request URL:\n{auth_url}\n')
     print(f'Authentication Request Header:\n{http_request_header}\n')
     print(f'Authentication Request Body:\n{http_request_body}\n')
-    
-    print(f'Authentication Response:\n{response.json()}\n')
     
     if not response.json()["errors"]:
         result = decrypt_response(response)
