@@ -50,14 +50,15 @@ def requestOTP(request, pcn):
     otp_request['requestTime'] = get_current_time()
     otp_request['individualId'] = str(pcn)
     otp_request['individualIdType'] = "VID"
-    otp_request['otpChannel'] = ['email']
+    otp_request['otpChannel'] = otp_channel
     
     otp_request_header['signature'] = create_signature(json.dumps(otp_request), partner_private_key_location)
     otp_request_header['Authorization'] = get_authorization()
     otp_request_header['Content-type'] = "application/json"
     
-    print(f'OTP Request Header:\n{str(json.dumps(otp_request_header))}\n')
     print(f'OTP Request URL:\n{otp_url}\n')
+    print(f'OTP Request Header:\n{str(json.dumps(otp_request_header))}\n')
+    print(f'OTP Request Body:\n{str(json.dumps(otp_request))}\n')
     
     response = requests.post(otp_url, data=json.dumps(otp_request), headers=otp_request_header, verify=False)
     
@@ -82,7 +83,8 @@ def authenticate(request):
 
     # transaction_id = request.get("transaction_id", get_random_string(length=10, allowed_chars='0123456789'))
     transaction_id = "1234567890"
-    value = request.POST.dict()
+    
+    value = json.loads(request.body)
     
     print(f"Request Method: {request.method}\n")
     print(f"Value:\n{value}\n")
@@ -124,6 +126,8 @@ def authenticate(request):
     # request
     authentication_request_request = json.dumps(http_request_body_request)
     authentication_request_request = str(authentication_request_request)
+
+    print(f"Authentication Request: {authentication_request_request}\n")
     
     AES_SECRET_KEY = secrets.token_bytes(32)
     
@@ -152,12 +156,13 @@ def authenticate(request):
     
     # content-type header
     http_request_header['content-type'] = "application/json"
-        
+            
     response = requests.post(auth_url, headers=http_request_header, data=json.dumps(http_request_body), verify=False)
     
     print(f'Authentication Request URL:\n{auth_url}\n')
     print(f'Authentication Request Header:\n{http_request_header}\n')
     print(f'Authentication Request Body:\n{http_request_body}\n')
+    print(f'Authentication Response:\n{response.json()}\n')
     
     if not response.json()["errors"]:
         result = decrypt_response(response)
@@ -165,4 +170,5 @@ def authenticate(request):
         return JsonResponse(result)
 
     response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
+    # print(f'Authentication Response: {response}')
     return JsonResponse(response)

@@ -263,13 +263,84 @@ $(function() {
          });
     });
 
+    var biometric_input = "";
+
     $("#biometric-capture").click(function() {
-        console.log("Initiating Biometric Capture....");
-        fingerprintCapture($("#fingers-count").val());
+        biometric_input = [];
+        if($("#auth-type-fp").is(':checked')) {
+            biometricCapture("Finger", $("#fingers-count").val(), 4501);
+        }
+        
+        if($("#auth-type-iris").is(':checked')){
+            biometricCapture("Iris", $("#fingers-count").val(), 4502);
+        }
+
+        if($("#auth-type-face").is(':checked')) {
+            biometricCapture("Face", 1, 4503);
+        }
     });
 
+    async function biometricCapture(type ,input, port) {
+        const date = new Date().toISOString();
+    
+        await fetch("http://127.0.0.1:" + port + "/capture", {
+            method: "CAPTURE",
+            headers: {
+                "content-type": "application/json",
+                "accept": "*/*",
+            },
+            body: JSON.stringify({
+                "env": "Staging",
+                "purpose": "Auth",
+                "specVersion": "0.9.5.1.5",
+                "timeout": "300000",
+                "captureTime": date,
+                "domainUri": "https://api.apps-external.uat2.phylsys.gov.ph",
+                "transactionId": "1234567890",
+                "bio": [
+                    {
+                        "type": type,
+                        "count": input,
+                        "bioSubType": [
+                            "UNKNOWN"
+                        ],
+                        "requestedScore": "60",
+                        "deviceId": "2147000102",
+                        "deviceSubId": "1",
+                        "previousHash": ""
+                    }
+                ],
+                "customOpts": [
+                    {
+                        "name": "name1",
+                        "value": "value1"
+                    }
+                ]
+            })
+        })
+        .then(response => response.json())  // Parse the response as JSON
+        .then(data => {
+            resetAuthenticationResult();
+    
+            data = data.biometrics;
+    
+            var result = JSON.stringify(data, null, 4);
+            
+            $.merge(biometric_input, data);
+            // biometric_input = data;
+            
+            $("#modal-result-value").text(result);
+            $("#modal-result").modal("toggle");
+    
+            // return data;
+        })
+        .catch(error => {
+            console.error("Error:", error);  // Handle any errors
+        });
+    } 
+
     $("#send-auth-request").click(function() {
-        // console.log(biometric_input);
+        console.log(biometric_input);
         var demog_value = {};
 
         if($("#auth-type-demo").is(':checked')) {
@@ -285,121 +356,65 @@ $(function() {
         }
         
         demog_value = JSON.stringify(demog_value);
+        biometric_input = JSON.stringify(biometric_input);
 
-        var request_body = {
-            "individual_id": $("#individual-id").val(),
-            "individual_id_type": $("#individual-id-type").val(),
-            
-            "input_bio": ($("#auth-type-fp").is(':checked') || $("#auth-type-iris").is(':checked') || $("#auth-type-face").is(':checked')) ? "on" : "off",
-            "input_otp": $("#auth-type-otp").is(':checked') ? "on" : "off",
-            "input_demo": $("#auth-type-demo").is(':checked') ? "on" : "off",
-            "input_ekyc": $("#auth-type-ekyc").is(':checked') ? "on" : "off",
-    
-            "input_otp_value": $("#otp-value").val(),
-            "input_demo_value": demog_value,
-            "input_bio_value": biometric_input,
-        }
+        fetch("/authenticate/", {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                "accept": "*/*",
+            },
+            body: JSON.stringify({
+                "individual_id": $("#individual-id").val(),
+                "individual_id_type": $("#individual-id-type").val(),
+                
+                "input_bio": ($("#auth-type-fp").is(':checked') || $("#auth-type-iris").is(':checked') || $("#auth-type-face").is(':checked')) ? "on" : "off",
+                "input_otp": $("#auth-type-otp").is(':checked') ? "on" : "off",
+                "input_demo": $("#auth-type-demo").is(':checked') ? "on" : "off",
+                "input_ekyc": $("#auth-type-ekyc").is(':checked') ? "on" : "off",
+        
+                "input_otp_value": $("#auth-type-otp").is(':checked') ? $("#otp-value").val() : null,
+                "input_demo_value":  $("#auth-type-demo").is(':checked') ? demog_value : null,
+                "input_bio_value": ($("#auth-type-fp").is(':checked') || $("#auth-type-iris").is(':checked') || $("#auth-type-face").is(':checked')) ? biometric_input : null,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            resetAuthenticationResult();
+            if(data.kycStatus) {
+                var identity = data.identity
+                $("#ekyc_last_name").html(identity.lastName_eng ? identity.lastName_eng : "N/A");
+                $("#ekyc_first_name").html(identity.firstName_eng ? identity.firstName_eng : "N/A");
+                $("#ekyc_middle_name").html(identity.middleName_eng ? identity.middleName_eng : "N/A");
+                $("#ekyc_suffix").html(identity.suffix_eng ? identity.suffix_eng : "N/A");
+                $("#ekyc_dob").html(identity.dob ? identity.dob : "N/A");
+                $("#ekyc_phone_number").html(identity.phoneNumber ? identity.phoneNumber : "N/A");
+                $("#ekyc_email").html(identity.emailId ? identity.emailId : "N/A");
+                $("#ekyc_age").html(identity.age ? identity.age : "N/A");
+                $("#ekyc_marital_status").html(identity.maritalStatus_eng ? identity.maritalStatus_eng : "N/A");
+                $("#ekyc_country").html(identity.pobCountry_eng ? identity.pobCountry_eng : "N/A");
+                $("#ekyc_present_address").html(identity.presentAddress_eng ? identity.presentAddress_eng : "N/A");
+                $("#ekyc_province").html(identity.location1_eng ? identity.location1_eng : "N/A");
+                $("#ekyc_municipality").html(identity.location2_eng ? identity.location2_eng : "N/A");
+                $("#ekyc_barangay").html(identity.location3_eng ? identity.location3_eng : "N/A");
+                $("#ekyc_postal_code").html(identity.postalCode ? identity.postalCode : "N/A");
+                $("#ekyc_blood_type").html(identity.bloodType_eng ? identity.bloodType_eng : "N/A");
+                $("#ekyc_photo").attr("src", "data:image/png;base64," + identity.photo);
 
-        console.log(biometric_input);
-
-        $.ajax({
-            type:"POST",
-            url: "/authenticate/",
-            data: request_body,
-            success: function(data) {
-                resetAuthenticationResult();
-                if(data.kycStatus) {
-                    var identity = data.identity
-                    $("#ekyc_last_name").html(identity.lastName_eng ? identity.lastName_eng : "N/A");
-                    $("#ekyc_first_name").html(identity.firstName_eng ? identity.firstName_eng : "N/A");
-                    $("#ekyc_middle_name").html(identity.middleName_eng ? identity.middleName_eng : "N/A");
-                    $("#ekyc_suffix").html(identity.suffix_eng ? identity.suffix_eng : "N/A");
-                    $("#ekyc_dob").html(identity.dob ? identity.dob : "N/A");
-                    $("#ekyc_phone_number").html(identity.phoneNumber ? identity.phoneNumber : "N/A");
-                    $("#ekyc_email").html(identity.emailId ? identity.emailId : "N/A");
-                    $("#ekyc_age").html(identity.age ? identity.age : "N/A");
-                    $("#ekyc_marital_status").html(identity.maritalStatus_eng ? identity.maritalStatus_eng : "N/A");
-                    $("#ekyc_country").html(identity.pobCountry_eng ? identity.pobCountry_eng : "N/A");
-                    $("#ekyc_present_address").html(identity.presentAddress_eng ? identity.presentAddress_eng : "N/A");
-                    $("#ekyc_province").html(identity.location1_eng ? identity.location1_eng : "N/A");
-                    $("#ekyc_municipality").html(identity.location2_eng ? identity.location2_eng : "N/A");
-                    $("#ekyc_barangay").html(identity.location3_eng ? identity.location3_eng : "N/A");
-                    $("#ekyc_postal_code").html(identity.postalCode ? identity.postalCode : "N/A");
-                    $("#ekyc_blood_type").html(identity.bloodType_eng ? identity.bloodType_eng : "N/A");
-                    $("#ekyc_photo").attr("src", "data:image/png;base64," + identity.photo);
-
-                    $("#ekyc_result").show();
-                }
-                else {
-                    var result = JSON.stringify(data, null, 4);
-                    $("#modal-result-value").text(result);
-                }
-
-                $("#modal-result").modal("toggle");
+                $("#ekyc_result").show();
             }
+            else {
+                var result = JSON.stringify(data, null, 4);
+                $("#modal-result-value").text(result);
+            }
+
+            $("#modal-result").modal("toggle");
+        })
+        .catch(error => {
+            console.log("Error: " + error);
         });
     });
 });
-
-var biometric_input = "";
-
-async function fingerprintCapture(input) {
-    biometric_input = "";
-    const date = new Date().toISOString();
-    const params = {
-        "env": "Staging",
-        "purpose": "Auth",
-        "specVersion": "0.9.5.1.5",
-        "timeout": "300000",
-        "captureTime": date,
-        "domainUri": "https://api.apps-external.uat2.phylsys.gov.ph",
-        "transactionId": "1234567890",
-        "bio": [
-            {
-                "type": "Finger",
-                "count": input,
-                "bioSubType": [
-                    "UNKNOWN"
-                ],
-                "requestedScore": "60",
-                "deviceId": "2147000102",
-                "deviceSubId": "1",
-                "previousHash": ""
-            }
-        ],
-        "customOpts": [
-            {
-                "name": "name1",
-                "value": "value1"
-            }
-        ]
-    };
-
-    const fingerprint_url = "http://127.0.0.1:4501/capture";
-    
-    const headers = {
-        "content-type": "application/json",
-        "accept": "*/*",
-    }
-
-    const response = await fetch(fingerprint_url, {
-        method: "CAPTURE",
-        headers: headers,
-        body: JSON.stringify(params)
-    })
-    .then(response => response.json())  // Parse the response as JSON
-    .then(data => {
-        resetAuthenticationResult();
-        data = data.biometrics;
-        biometric_input = JSON.stringify(data);
-        var result = JSON.stringify(data, null, 4);
-        $("#modal-result-value").text(result);
-        $("#modal-result").modal("toggle");
-    })
-    .catch(error => {
-        console.error("Error:", error);  // Handle any errors
-    });
-} 
 
 function disableFingerPrintForm(value) {
     $("#fingers-count").attr("disabled", value);
