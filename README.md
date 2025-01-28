@@ -87,7 +87,7 @@ VERSION=[PhilSys Version]
 7. **Run the Django Project**
 
 ```bash
-python auth_demo_ui/manage.py runserver 0.0.0.0:8000
+docker-compose up --build
 ```
 
 ## Contributing
