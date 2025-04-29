@@ -1,4 +1,5 @@
 from .utils import get_current_time
+from .http_error import handle_status
 
 import os, requests, json
 
@@ -15,5 +16,13 @@ def get_authorization():
     http_authorization_header['content-type'] = 'application/json'
 
     response = requests.post(os.environ.get('ID_AUTH_MANAGER'), data=http_autorization_request_body, verify=False, headers=http_authorization_header)
-    
+
+    if response.status_code <= 599 and response.status_code >= 400:
+        error_message = {
+            "Error": response.status_code,
+            "Error Message": handle_status(response.status_code)
+        }
+
+        return error_message
+
     return response.headers['authorization']

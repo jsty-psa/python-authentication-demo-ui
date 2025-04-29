@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from authentication.include.authorization import get_authorization
 from authentication.include.base64 import base64_url_safe_string
 from authentication.include.crypto import symmetric_encrypt, asymmetric_encrypt
+from authentication.include.http_error import handle_status
 from authentication.include.signature import create_signature
 from authentication.include.utils import print_hex_binary, get_current_time, get_thumbprint, decrypt_response
 
@@ -55,6 +56,9 @@ def requestOTP(request, pcn):
     otp_request_header['signature'] = create_signature(json.dumps(otp_request), partner_private_key_location)
     otp_request_header['Authorization'] = get_authorization()
     otp_request_header['Content-type'] = "application/json"
+
+    if(isinstance(otp_request_header['Authorization'], dict)):
+        return JsonResponse(otp_request_header['Authorization'])
     
     print(f'OTP Request URL:\n{otp_url}\n')
     print(f'OTP Request Header:\n{str(json.dumps(otp_request_header))}\n')
@@ -62,14 +66,21 @@ def requestOTP(request, pcn):
     
     response = requests.post(otp_url, data=json.dumps(otp_request), headers=otp_request_header, verify=False)
     
-    print(f'OTP Response:\n{str(response.json())}\n')
+    print(response.status_code)
     
-    if not response.json()["errors"]:
+    # print(f'OTP Response:\n{str(response.json())}\n')
+    
+    if response.status_code == 200 and not response.json()["errors"]:
         result = decrypt_response(response)
         print(f'OTP Response:\n{result}\n')
         return JsonResponse(result)
-
-    response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
+    elif response.status_code <= 599 and response.status_code >= 400:
+        response = {
+            "Error": response.status_code,
+            "Error Message": handle_status(response.status_code)
+        }
+    else:
+        response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
 
 @csrf_exempt
@@ -156,6 +167,10 @@ def authenticate(request):
     
     # content-type header
     http_request_header['content-type'] = "application/json"
+
+    if(isinstance(http_request_header['authorization'], dict)):
+        print(http_request_header['authorization'])
+        return JsonResponse(http_request_header['authorization'])
             
     response = requests.post(auth_url, headers=http_request_header, data=json.dumps(http_request_body), verify=False)
     
@@ -164,11 +179,16 @@ def authenticate(request):
     print(f'Authentication Request Body:\n{http_request_body}\n')
     print(f'Authentication Response:\n{response.json()}\n')
     
-    if not response.json()["errors"]:
+    if response.status_code == 200 and not response.json()["errors"]:
         result = decrypt_response(response)
-        print(f'Authentication Response:\n{result}\n')
+        print(f'OTP Response:\n{result}\n')
         return JsonResponse(result)
-
-    response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
+    elif response.status_code <= 599 and response.status_code >= 400:
+        response = {
+            "Error": response.status_code,
+            "Error Message": handle_status(response.status_code)
+        }
+    else:
+        response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     # print(f'Authentication Response: {response}')
     return JsonResponse(response)
