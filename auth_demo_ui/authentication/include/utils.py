@@ -41,7 +41,9 @@ def decrypt_response(response):
     
     response_session_key_encrypted = base64_url_decode(response.json()["responseSessionKey"])
     response_encrypted = base64_url_decode(response.json()["response"])
+    
     result["response_session_key"] = asymmetric_decrypt(response_session_key_encrypted, partner_private_key_bytes)
+    
     result["response"] = symmetric_decrypt(response_encrypted, result["response_session_key"])
     
     return result["response"]

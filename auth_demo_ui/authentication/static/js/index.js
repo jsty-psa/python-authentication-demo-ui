@@ -239,21 +239,28 @@ $(function() {
     });
 
     $("#otp-request").click(function() {
-        individual_id = $("#individual-id").val();
-        individual_id_type = $("#individual-id-type").val();        
-        otp_email = $("#otp-email").prop("checked");
-        otp_phone = $("#otp-phone").prop("checked");
+        var individual_id = $("#individual-id").val();
+        var individual_id_type = $("#individual-id-type").val();
+        var otp_email = $("#otp-email").prop("checked");
+        var otp_phone = $("#otp-phone").prop("checked");
+        var csrf_token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $.ajax({
             type:"POST",
+            headers: {
+                "content-type": "application/json",
+                "accept": "*/*",
+                'X-CSRFToken': csrf_token,
+            },
             url:"/request/otp/" + individual_id,
-            data:{
+            // url:"http://localhost/request/otp/" + individual_id,
+            data: JSON.stringify({
                 // _token: _token,
                 individual_id: individual_id,
                 individual_id_type: individual_id_type,
                 otp_email: otp_email,
                 otp_phone: otp_phone,
-            },
+            }),
             success:function(data) {
                 resetAuthenticationResult();
                 var result = JSON.stringify(data, null, 4);
@@ -340,8 +347,8 @@ $(function() {
     } 
 
     $("#send-auth-request").click(function() {
-        console.log(biometric_input);
         var demog_value = {};
+        var csrf_token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         if($("#auth-type-demo").is(':checked')) {
             $.each(ids, function(key, value) {
@@ -359,10 +366,12 @@ $(function() {
         biometric_input = JSON.stringify(biometric_input);
 
         fetch("/authenticate/", {
+        // fetch("http://localhost/authenticate", {
             method: "POST",
             headers: {
                 "content-type": "application/json",
                 "accept": "*/*",
+                "X-CSRFToken": csrf_token,
             },
             body: JSON.stringify({
                 "individual_id": $("#individual-id").val(),

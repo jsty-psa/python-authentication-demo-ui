@@ -13,22 +13,24 @@ import os, json, requests, secrets, warnings
 
 warnings.filterwarnings("ignore")
 
-def test(request):
+def index(request):
     return render(request, 'authenticate.html')
 
-@csrf_exempt
 def requestOTP(request, pcn):
     base_url = os.environ.get('BASE_URL')
     misp_license_key = os.environ.get('TSP_LICENSE_KEY')
     partner_id = os.environ.get('PARTNER_ID')
     partner_api_key = os.environ.get('API_KEY')
     version = os.environ.get('VERSION')
-    
+    value = json.loads(request.body)
+
     otp_channel = []
+
+    print(f'Request: {value}\n')
     
-    otp_email = request.POST.get('otp_email', '').lower()
-    otp_phone = request.POST.get('otp_phone', '').lower()
-    
+    otp_email = str(value['otp_email']).lower()
+    otp_phone = str(value['otp_phone']).lower()
+
     otp_email = otp_email in ['1', 'true', 't', 'yes', 'y']
     otp_phone = otp_phone in ['1', 'true', 't', 'yes', 'y']
     
@@ -83,7 +85,6 @@ def requestOTP(request, pcn):
         response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
 
-@csrf_exempt
 def authenticate(request):
 
     http_request_body = {}
@@ -171,17 +172,16 @@ def authenticate(request):
     if(isinstance(http_request_header['authorization'], dict)):
         print(http_request_header['authorization'])
         return JsonResponse(http_request_header['authorization'])
-            
-    response = requests.post(auth_url, headers=http_request_header, data=json.dumps(http_request_body), verify=False)
     
     print(f'Authentication Request URL:\n{auth_url}\n')
     print(f'Authentication Request Header:\n{http_request_header}\n')
     print(f'Authentication Request Body:\n{http_request_body}\n')
-    print(f'Authentication Response:\n{response.json()}\n')
-    
+
+    response = requests.post(auth_url, headers=http_request_header, data=json.dumps(http_request_body), verify=False)
+
     if response.status_code == 200 and not response.json()["errors"]:
         result = decrypt_response(response)
-        print(f'OTP Response:\n{result}\n')
+        print(f'Authentication Response:\n{result}\n')
         return JsonResponse(result)
     elif response.status_code <= 599 and response.status_code >= 400:
         response = {
