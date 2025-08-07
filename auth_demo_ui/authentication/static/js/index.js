@@ -245,6 +245,9 @@ $(function() {
         var otp_phone = $("#otp-phone").prop("checked");
         var csrf_token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        $("#loading_screen_message").html("Sending OTP...")
+        $("#loading_screen").show();
+
         $.ajax({
             type:"POST",
             headers: {
@@ -262,6 +265,7 @@ $(function() {
                 otp_phone: otp_phone,
             }),
             success:function(data) {
+                $("#loading_screen").hide();
                 resetAuthenticationResult();
                 var result = JSON.stringify(data, null, 4);
                 $("#modal-result-value").text(result);
@@ -275,21 +279,61 @@ $(function() {
     $("#biometric-capture").click(function() {
         biometric_input = [];
         if($("#auth-type-fp").is(':checked')) {
-            biometricCapture("Finger", $("#fingers-count").val(), 4501);
+            deviceDiscovery("Finger");
         }
         
         if($("#auth-type-iris").is(':checked')){
-            biometricCapture("Iris", $("#fingers-count").val(), 4502);
+            deviceDiscovery("Iris");
         }
 
         if($("#auth-type-face").is(':checked')) {
-            biometricCapture("Face", 1, 4503);
+            deviceDiscovery("Face");
         }
     });
 
-    async function biometricCapture(type ,input, port) {
-        const date = new Date().toISOString();
+    const deviceDiscovery = async (type, port_start = 4501, port_end = 4506, found = false) => {
+        $("#loading_screen_message").html(`Checking port ${port_start}...`);
+        $("#loading_screen").show();
+        try {
+            const response = await fetch("http://127.0.0.1:" + port_start + "/device", {
+                method: "MOSIPDISC",
+                headers: {
+                    "content-type": "application/json",
+                    "accept": "*/*",
+                },
+                body: JSON.stringify({
+                    type: type
+                })
+            });
     
+            const data = await response.text();
+    
+            if(data && data !== "undefined") {
+                const parsed = JSON.parse(data)[0];
+    
+                const serial = parsed.deviceId;
+                const errorCode = parsed.error ?. errorCode;
+                const deviceStatus = parsed.deviceStatus;
+    
+                if(errorCode == 0 && deviceStatus === "Ready" && serial && serial !== "undefined") {
+                    found = true;
+                    biometricCapture(type, 1, port_start, serial);
+                }
+    
+            }
+        }
+        catch(e) {
+            // console.log(`Error 4: ${e}`);
+        }
+
+        if(port_start < port_end && !found) {
+            deviceDiscovery(type, port_start + 1, port_end);
+        }
+    }
+
+    async function biometricCapture(type, input, port, deviceId) {
+        const date = new Date().toISOString();
+        $("#loading_screen_message").html(`Capturing biometrics...`);
         await fetch("http://127.0.0.1:" + port + "/capture", {
             method: "CAPTURE",
             headers: {
@@ -299,7 +343,8 @@ $(function() {
             body: JSON.stringify({
                 "env": "Staging",
                 "purpose": "Auth",
-                "specVersion": "0.9.5.1.5",
+                // "specVersion": "0.9.5.1.5",
+                "specVersion": "0.9.5",
                 "timeout": "300000",
                 "captureTime": date,
                 "domainUri": "https://api.apps-external.uat2.phylsys.gov.ph",
@@ -312,7 +357,9 @@ $(function() {
                             "UNKNOWN"
                         ],
                         "requestedScore": "60",
-                        "deviceId": "2147000102",
+                        // "deviceId": "2147000102",
+                        // "deviceId": "2510000802",
+                        "deviceId": deviceId,
                         "deviceSubId": "1",
                         "previousHash": ""
                     }
@@ -326,11 +373,10 @@ $(function() {
             })
         })
         .then(response => response.json())  // Parse the response as JSON
-        .then(data => {
+        .then(data => {                
+            var data = data.biometrics;
+            $("#loading_screen").hide();
             resetAuthenticationResult();
-    
-            data = data.biometrics;
-    
             var result = JSON.stringify(data, null, 4);
             
             $.merge(biometric_input, data);
@@ -338,11 +384,10 @@ $(function() {
             
             $("#modal-result-value").text(result);
             $("#modal-result").modal("toggle");
-    
-            // return data;
         })
         .catch(error => {
-            console.error("Error:", error);  // Handle any errors
+            biometricCapture(type, input, port_start + 1);
+            // console.error("Error:", error);  // Handle any errors
         });
     } 
 
@@ -364,6 +409,9 @@ $(function() {
         
         demog_value = JSON.stringify(demog_value);
         biometric_input = JSON.stringify(biometric_input);
+
+        $("#loading_screen_message").html("Authenticating...")
+        $("#loading_screen").show();
 
         fetch("/authenticate/", {
         // fetch("http://localhost/authenticate", {
@@ -390,6 +438,7 @@ $(function() {
         .then(response => response.json())
         .then(data => {
             resetAuthenticationResult();
+            $("#loading_screen").hide();
             if(data.kycStatus) {
                 var identity = data.identity
                 $("#ekyc_last_name").html(identity.lastName_eng ? identity.lastName_eng : "N/A");

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from django.conf import settings
 from authentication.include.authorization import get_authorization
 from authentication.include.base64 import base64_url_safe_string
 from authentication.include.crypto import symmetric_encrypt, asymmetric_encrypt
@@ -13,7 +13,13 @@ import os, json, requests, secrets, warnings
 
 warnings.filterwarnings("ignore")
 
+<<<<<<< HEAD
 def index(request):
+=======
+base_path = settings.BASE_DIR
+
+def test(request):
+>>>>>>> bf92758 (Changed routing scheme in getting keys and certificates and added loading screen)
     return render(request, 'authenticate.html')
 
 def requestOTP(request, pcn):
@@ -42,7 +48,7 @@ def requestOTP(request, pcn):
     
     # transaction_id = get_random_string(length=10, allowed_chars='0123456789')
     transaction_id = "1234567890"
-    partner_private_key_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
+    partner_private_key_location = f'{base_path}/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
     otp_url = f'{base_url}/idauthentication/v1/otp/{misp_license_key}/{partner_id}/{partner_api_key}'
     
     otp_request = {}
@@ -78,8 +84,8 @@ def requestOTP(request, pcn):
         return JsonResponse(result)
     elif response.status_code <= 599 and response.status_code >= 400:
         response = {
-            "Error": response.status_code,
-            "Error Message": handle_status(response.status_code)
+            "error_code": response.status_code,
+            "error_message": handle_status(response.status_code)
         }
     else:
         response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
@@ -96,14 +102,16 @@ def authenticate(request):
     # transaction_id = request.get("transaction_id", get_random_string(length=10, allowed_chars='0123456789'))
     transaction_id = "1234567890"
     
+    print(f"Request Body: {request.body}\n\n")
+
     value = json.loads(request.body)
     
     print(f"Request Method: {request.method}\n")
     print(f"Value:\n{value}\n")
     
     partner_id = os.environ.get('PARTNER_ID')
-    IDA_certificate_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-IDAcertificate.cer'
-    partner_private_key_location = f'./auth_demo_ui/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
+    IDA_certificate_location = f'{base_path}/authentication/keys/{partner_id}/{partner_id}-IDAcertificate.cer'
+    partner_private_key_location = f'{base_path}/authentication/keys/{partner_id}/{partner_id}-partner-private-key.pem'
     base_url = os.environ.get('BASE_URL')
     version = os.environ.get('VERSION')
     
@@ -185,8 +193,8 @@ def authenticate(request):
         return JsonResponse(result)
     elif response.status_code <= 599 and response.status_code >= 400:
         response = {
-            "Error": response.status_code,
-            "Error Message": handle_status(response.status_code)
+            "error_code": response.status_code,
+            "error_message": handle_status(response.status_code)
         }
     else:
         response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
