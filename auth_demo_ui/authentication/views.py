@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.conf import settings
 from authentication.include.authorization import get_authorization
 from authentication.include.base64 import base64_url_safe_string
@@ -13,15 +14,12 @@ import os, json, requests, secrets, warnings
 
 warnings.filterwarnings("ignore")
 
-<<<<<<< HEAD
-def index(request):
-=======
 base_path = settings.BASE_DIR
 
-def test(request):
->>>>>>> bf92758 (Changed routing scheme in getting keys and certificates and added loading screen)
+def index(request):
     return render(request, 'authenticate.html')
 
+@require_http_methods(["POST"])
 def requestOTP(request, pcn):
     base_url = os.environ.get('BASE_URL')
     misp_license_key = os.environ.get('TSP_LICENSE_KEY')
@@ -91,8 +89,8 @@ def requestOTP(request, pcn):
         response = json.loads(str(response.json()).replace('\'', '"').replace('None', '"None"'))
     return JsonResponse(response)
 
+@require_http_methods(["POST"])
 def authenticate(request):
-
     http_request_body = {}
     http_request_header = {}
     http_request_body['requestedAuth'] = {}
