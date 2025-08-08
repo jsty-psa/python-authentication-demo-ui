@@ -245,7 +245,7 @@ $(function() {
         var otp_phone = $("#otp-phone").prop("checked");
         var csrf_token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        $("#loading_screen_message").html("Sending OTP...")
+        $("#loading_screen_message").html("Requesting OTP...")
         $("#loading_screen").show();
 
         $.ajax({
@@ -279,19 +279,19 @@ $(function() {
     $("#biometric-capture").click(function() {
         biometric_input = [];
         if($("#auth-type-fp").is(':checked')) {
-            deviceDiscovery("Finger");
+            deviceDiscovery("Finger", $("#fingers-count").val());
         }
         
         if($("#auth-type-iris").is(':checked')){
-            deviceDiscovery("Iris");
+            deviceDiscovery("Iris",  $("#iris-type").val());
         }
 
         if($("#auth-type-face").is(':checked')) {
-            deviceDiscovery("Face");
+            deviceDiscovery("Face", 1);
         }
     });
 
-    const deviceDiscovery = async (type, port_start = 4501, port_end = 4506, found = false) => {
+    const deviceDiscovery = async (type, fingers_count, port_start = 4501, port_end = 4506, found = false) => {
         $("#loading_screen_message").html(`Checking port ${port_start}...`);
         $("#loading_screen").show();
         try {
@@ -314,10 +314,11 @@ $(function() {
                 const serial = parsed.deviceId;
                 const errorCode = parsed.error ?. errorCode;
                 const deviceStatus = parsed.deviceStatus;
+                const version = parsed.serviceVersion;
     
                 if(errorCode == 0 && deviceStatus === "Ready" && serial && serial !== "undefined") {
                     found = true;
-                    biometricCapture(type, 1, port_start, serial);
+                    biometricCapture(type, fingers_count, port_start, version, serial);
                 }
     
             }
@@ -327,13 +328,23 @@ $(function() {
         }
 
         if(port_start < port_end && !found) {
-            deviceDiscovery(type, port_start + 1, port_end);
+            deviceDiscovery(type, fingers_count, port_start + 1);
+        }
+        else if(!found) {
+            $("#loading_screen").hide();
+            var result = JSON.stringify({
+                error_code: "RP-AUTH-001",
+                error_message: "Unable to fetch active biometric."
+            }, null, 4);
+            $("#modal-result-header").html("Biometric Error");
+            $("#modal-result-value").text(result);
+            $("#modal-result").modal("toggle");
         }
     }
 
-    async function biometricCapture(type, input, port, deviceId) {
+    async function biometricCapture(type, count, port, version, deviceId) {
         const date = new Date().toISOString();
-        $("#loading_screen_message").html(`Capturing biometrics...`);
+        $("#loading_screen_message").html(`Capturing biometrics at port ${port}...`);
         await fetch("http://127.0.0.1:" + port + "/capture", {
             method: "CAPTURE",
             headers: {
@@ -344,7 +355,7 @@ $(function() {
                 "env": "Staging",
                 "purpose": "Auth",
                 // "specVersion": "0.9.5.1.5",
-                "specVersion": "0.9.5",
+                "specVersion": version,
                 "timeout": "300000",
                 "captureTime": date,
                 "domainUri": "https://api.apps-external.uat2.phylsys.gov.ph",
@@ -352,13 +363,11 @@ $(function() {
                 "bio": [
                     {
                         "type": type,
-                        "count": input,
+                        "count": count,
                         "bioSubType": [
                             "UNKNOWN"
                         ],
                         "requestedScore": "60",
-                        // "deviceId": "2147000102",
-                        // "deviceId": "2510000802",
                         "deviceId": deviceId,
                         "deviceSubId": "1",
                         "previousHash": ""
@@ -381,13 +390,13 @@ $(function() {
             
             $.merge(biometric_input, data);
             // biometric_input = data;
-            
+
+            $("#modal-result-header").html("Biometric");
             $("#modal-result-value").text(result);
             $("#modal-result").modal("toggle");
         })
         .catch(error => {
-            biometricCapture(type, input, port_start + 1);
-            // console.error("Error:", error);  // Handle any errors
+            console.log(error);
         });
     } 
 
@@ -466,6 +475,7 @@ $(function() {
                 $("#modal-result-value").text(result);
             }
 
+            $("#modal-result-header").html("Authentication Result");
             $("#modal-result").modal("toggle");
         })
         .catch(error => {
